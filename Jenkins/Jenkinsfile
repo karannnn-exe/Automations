@@ -1,0 +1,80 @@
+
+@Library('shared_lib@master') _
+
+def ENV_NAME = JOB_NAME.split("/")[0]
+
+def timestamp = new Date().format("yyyy-MM-dd HH:mm:ss")
+
+def ssmCommandStates = [
+    terminalStates: ["Success", "DeliveryTimedOut", "ExecutionTimedOut", "Failed", "Incomplete", "Canceled", "RateExceeded" ],
+    nonTerminalStates: ["Pending", "InProgress", "Delayed"]
+]
+
+def getSsmStatus(commandId) {
+    return sh(
+        returnStdout: true,
+        script: """aws ssm list-commands --command-id ${commandId} | jq -r '.Commands[0].Status'"""
+    ).trim()
+}
+
+def checkKafkaLag(instanceName) {
+    def commandId = sh(
+        returnStdout: true,
+        script: """aws ssm send-command --document-name "AWS-RunShellScript" --document-version "1" --targets '[{"Key":"tag:module","Values":["${instanceName}"]}]' --parameters '{"commands":["#!/bin/bash","cd /opt/kafka","python3 check_lag.py"],"workingDirectory":[""],"executionTimeout":["3600"]}' --timeout-seconds 600 --max-concurrency "50" --max-errors "0" --region us-west-2 | jq -r '.Command.CommandId'"""
+    ).trim()
+
+    return commandId
+}
+
+pipeline {
+    agent { label "${ENV_NAME}_slave" }
+     
+    triggers {
+        cron('*/5 * * * *') 
+    }
+
+    stages {
+        stage("Send mirrormaker consumer lag to cloudwatch") {
+            steps {
+                script {
+                    def checkKafkaLagSsmCommandId = checkKafkaLag("mirrormaker").trim()
+                    println("SSM Command ID: ${checkKafkaLagSsmCommandId}")
+                    try {
+                        def status = getSsmStatus(checkKafkaLagSsmCommandId)
+                        while (!ssmCommandStates.terminalStates.contains(status)) {
+                            echo "${timestamp}: SSM command is still in a non-terminal state: ${status}. Waiting for completion..."
+                            sleep(30)
+                            status = getSsmStatus(checkKafkaLagSsmCommandId)
+                            echo "${timestamp}: SSM Command Status: ${status}"
+                        }
+                        if (status == "Success") {
+                            echo "${timestamp}: SSM command completed successfully."
+                        } else {
+                            error "SSM command failed. Jenkins Pipeline will be marked as failed."
+                        }
+                    } catch (Exception e) {
+                        error "${timestamp}: Error executing SSM command: ${e.getMessage()}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+            }
+        }
+        failure {
+            script {
+                def failureMessage = "ALERT: Check lag Jenkins job failed - ${BUILD_URL}|Jenkins Build ${BUILD_NUMBER}"
+                if (ENV_NAME == 'prod') {
+                    jenkinsNotifications.notify("Failure", failureMessage, "c6-jenkins-prod-failures")
+                } else {
+                    jenkinsNotifications.notify("Failure", failureMessage, "c6-jenkins-nonprod-failures")
+                }
+            }
+        }
+    }
+}
+
