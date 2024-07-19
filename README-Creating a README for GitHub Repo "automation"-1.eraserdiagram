@@ -1,0 +1,54 @@
+flowchart-diagram
+
+title Creating a README for GitHub Repo "automation"
+
+// Define groups for different sections of the README
+Introduction [color: lightblue] {
+  Repo Name
+  Description
+}
+
+Contents [color: lightgreen] {
+  Shell Scripts
+  Python Codes
+  Jenkinsfiles
+  Terraform Code
+}
+
+Usage [color: lightcoral] {
+  Prerequisites
+  Installation
+  Running Scripts
+}
+
+Contributing [color: lightyellow] {
+  Contribution Guidelines
+  Code of Conduct
+}
+
+License [color: lightgrey] {
+  License Type
+}
+
+// Define the flow of creating the README
+Start [shape: oval, icon: file-text] > Repo Name [icon: github]
+Repo Name > Description [icon: info]
+Description > Shell Scripts [icon: terminal]
+Description > Python Codes [icon: code]
+Description > Jenkinsfiles [icon: file]
+Description > Terraform Code [icon: cloud]
+
+Shell Scripts > Prerequisites [icon: list]
+Python Codes > Prerequisites
+Jenkinsfiles > Prerequisites
+Terraform Code > Prerequisites
+
+Prerequisites > Installation [icon: download]
+Installation > Running Scripts [icon: play]
+
+Running Scripts > Contribution Guidelines [icon: users]
+Contribution Guidelines > Code of Conduct [icon: book]
+
+Code of Conduct > License Type [icon: file-text]
+License Type > End [shape: oval, icon: check-square]
+
