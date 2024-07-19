@@ -2,13 +2,3 @@
 
 # Automation
 # This Repo is useful for all the automation and scripts a DevOps Engineer uses for Daily use cases.
-
-
-
-<!-- eraser-additional-content -->
-## Diagrams
-<!-- eraser-additional-files -->
-<a href="/README-Creating a README for GitHub Repo "automation"-1.eraserdiagram" data-element-id="rT2IOTJ4SZ7jKGiZsC2Ga"><img src="/.eraser/aKDkNLvUcjBStPftKBlg___FGKEQ9KwFKO5sS36b6Fe6sdFpbD3___---diagram----2c1d611fb5b9aeac41bada3c05c1f877-Creating-a-README-for-GitHub-Repo--automation-.png" alt="" data-element-id="rT2IOTJ4SZ7jKGiZsC2Ga" /></a>
-<!-- end-eraser-additional-files -->
-<!-- end-eraser-additional-content -->
-<!--- Eraser file: https://app.eraser.io/workspace/aKDkNLvUcjBStPftKBlg --->
