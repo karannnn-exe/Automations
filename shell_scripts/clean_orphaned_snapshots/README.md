@@ -1,8 +1,9 @@
-```
+
 # Script To Delete Orphaned Snapshots
 
 This Bash script identifies and deletes orphaned Amazon EC2 snapshots in your AWS account. Orphaned snapshots are those that are not associated AMI's and are no longer needed.
 
+```
 ## Features
 
 - Finds all snapshots in the specified AWS account.
@@ -39,10 +40,10 @@ This Bash script identifies and deletes orphaned Amazon EC2 snapshots in your AW
 The script creates temporary files for processing:
 - `./all_snapshots.txt`: List of all snapshots.
 - `./ami_snapshots.txt`: List of snapshot IDs associated with available AMIs.
-- `./snapshots.txt`: List of orphaned snapshots.
+- `./delete_snapshots.txt`: List of orphaned snapshots.
 - `./failed_snapshots.txt`: Logged failures during the deletion process.
 
-These files are automatically deleted at the end of the script execution.
+These files are automatically deleted at the end of the script by Jenkins Clean Workspace function.
 
 ## Important Notes
 
