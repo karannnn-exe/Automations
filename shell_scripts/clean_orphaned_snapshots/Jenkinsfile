@@ -1,0 +1,82 @@
+@Library('your_shared_lib@master') _
+envName = JOB_NAME.split("/")[0]
+
+pipeline {
+    agent { 
+        label (envName == 'shared-infra' ? 'shared_infra_static_slave_1' : "${envName}_slave")
+    }
+
+    triggers {
+        cron('H 7 * * *')  // Runs once a day
+    }
+
+    options {
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: "10",
+                artifactNumToKeepStr: "10"
+                )
+            )
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage("Set Environment") {
+            steps {
+                wrap([$class: 'BuildUser']) {
+                    script {
+                        currentBuild.displayName = "#${envName}-#${currentBuild.number}"
+                        currentBuild.description = "Build By: #${env.BUILD_USER}"
+                    }
+                }
+            }
+        }
+        stage('Remove Orphaned Snapshots') {
+            steps {
+                script {
+                    try {
+                        def output = sh(script: './jenkins/clean_orphaned_snapshots/clean_orphaned_snapshots.sh', returnStdout: true).trim()
+                        echo "Output from snapshot cleanup:\n${output}"
+                        } catch (Exception e) {
+                            error("Snapshot cleanup failed: ${e.message}")
+                        }
+                    }
+                }
+            }
+        }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            script {
+                def successMessage = """\
+                Cleanup Snapshots Jenkins Job in ${envName} environment SUCCEEDED\n
+                Jenkins Build URL: ${env.BUILD_URL}\n
+                Jenkins Build Number: ${env.BUILD_NUMBER}\n
+                """.stripIndent()
+
+                if (envName == 'prod') {
+                    jenkinsNotifications.notify("Success", successMessage, "c6-jenkins-prod-success")
+                }
+            }
+        }
+        failure {
+            script {
+                def failureMessage = """\
+                ALERT: Cleanup Snapshots Jenkins Job in ${envName} environment FAILED\n
+                Jenkins Build URL: ${env.BUILD_URL}\n
+                Jenkins Build Number: ${env.BUILD_NUMBER}\n
+                Failure Reason: ${env.FAILURE_REASON}\n
+                """.stripIndent()
+
+                if (envName == 'prod') {
+                    jenkinsNotifications.notify("Failure", failureMessage, "jenkins-prod-failures")
+                } else {
+                    jenkinsNotifications.notify("Failure", failureMessage, "jenkins-nonprod-failures")
+                }
+            }
+        }
+    }    
+}

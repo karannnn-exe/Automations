@@ -69,9 +69,9 @@ pipeline {
             script {
                 def failureMessage = "ALERT: Check lag Jenkins job failed - ${BUILD_URL}|Jenkins Build ${BUILD_NUMBER}"
                 if (ENV_NAME == 'prod') {
-                    jenkinsNotifications.notify("Failure", failureMessage, "c6-jenkins-prod-failures")
+                    jenkinsNotifications.notify("Failure", failureMessage, "jenkins-prod-failures")
                 } else {
-                    jenkinsNotifications.notify("Failure", failureMessage, "c6-jenkins-nonprod-failures")
+                    jenkinsNotifications.notify("Failure", failureMessage, "jenkins-nonprod-failures")
                 }
             }
         }
